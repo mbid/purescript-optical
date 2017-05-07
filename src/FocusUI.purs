@@ -1,4 +1,4 @@
-module FocusUI (StateRenderer, patchRepeatedly) where
+module FocusUI (StateRenderer, embed, patchRepeatedly) where
 
 import Prelude
 import Control.Monad.Eff (Eff)
