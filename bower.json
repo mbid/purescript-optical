@@ -1,0 +1,34 @@
+{ "name": "purescript-focus-ui",
+  "homepage": "https://github.com/mbid/purescript-focus-ui",
+  "description": "Composable, Stateful UI in PureScript using Lenses",
+  "main": "",
+  "keywords": [
+    "purescript",
+    "incremental",
+    "ui",
+    "lens"
+  ],
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "output"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/mbid/purescript-focus-ui.git"
+  },
+  "dependencies": {
+    "purescript-prelude": "^3.0.0",
+    "purescript-smolder": "^7.0.0",
+    "purescript-dom": "^4.3.1",
+    "purescript-refs": "^3.0.0",
+    "purescript-incremental-dom": "^0.1.0",
+    "purescript-smolder-idom": "^0.1.1",
+    "purescript-lens": "^3.0.0",
+    "purescript-transformers": "^3.2.0"
+  },
+  "devDependencies": {
+    "purescript-psci-support": "^3.0.0"
+  }
+}
