@@ -8,6 +8,7 @@
     "ui",
     "lens"
   ],
+  "license": "MIT",
   "ignore": [
     "**/.*",
     "node_modules",
