@@ -11,9 +11,9 @@ where
 import Prelude
 import Control.Monad.State (class MonadState)
 import Control.Monad.State.Class (get, gets, modify, put, state)
+import Data.Lens (_2, over, set, view)
+import Data.Lens.Types (Lens')
 import Data.Tuple (Tuple(..))
-import Optic.Core (over, set, view)
-import Optic.Types (Lens')
 
 -- | The datum of a `MonadState`, reified as record.  
 -- | `mapMonad` and `mapState` induce the structure of a bifunctor
@@ -95,10 +95,7 @@ mapState l { state, get, gets, put, modify } =
   }
   where
     state' :: forall a. (t -> Tuple a t) -> m a
-    state' f = state g
-      where
-        g :: s -> Tuple a s
-        g = l f
+    state' f = state (\x -> over _2 (\y -> set l y x) $ f (view l x))
     get' :: m t
     get' = gets (view l :: s -> t)
     gets' :: forall a. (t -> a) -> m a

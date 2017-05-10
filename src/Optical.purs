@@ -7,8 +7,8 @@ import Control.Monad.State.Reified (MonadStateV, fromGetPutFunctions, mapState)
 import DOM (DOM)
 import DOM.Event.Event (Event)
 import DOM.Node.Types (Node)
-import Optic.Core (view)
-import Optic.Types (Lens')
+import Data.Lens (view)
+import Data.Lens.Types (Lens')
 import Text.Smolder.Markup (Markup)
 import Text.Smolder.Renderer.IncrementalDom (render)
 import Web.IncrementalDOM (patch)
@@ -44,7 +44,7 @@ type StateRenderer s m = s -> MonadStateV s m -> Markup (Event -> m Unit)
 embed ::
   forall s t m. Monad m =>
   Lens' s t -> StateRenderer t m -> StateRenderer s m
-embed l r s msv = r (view l s :: t) (mapState l msv)
+embed l r s msv = r (view l s) (mapState l msv)
 
 -- | `patchRepeatedly node initialState renderer`: Render `initialState` via
 -- | `renderer` into `node` and update the interface whenever the state

@@ -1,4 +1,5 @@
-{ "name": "purescript-optical",
+{
+  "name": "purescript-optical",
   "homepage": "https://github.com/mbid/purescript-optical",
   "description": "Composable, Stateful UI in PureScript using Lenses",
   "main": "",
@@ -26,8 +27,8 @@
     "purescript-refs": "^3.0.0",
     "purescript-incremental-dom": "^0.1.0",
     "purescript-smolder-idom": "^0.1.1",
-    "purescript-lens": "^3.0.0",
-    "purescript-transformers": "^3.2.0"
+    "purescript-transformers": "^3.2.0",
+    "purescript-profunctor-lenses": "^3.2.0"
   },
   "devDependencies": {
     "purescript-psci-support": "^3.0.0"
