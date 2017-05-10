@@ -1,5 +1,6 @@
 module Control.Monad.State.Reified
 ( MonadStateV
+, reifiedStateClass
 , fromStateFunction
 , fromGetPutFunctions
 , mapMonad
@@ -25,6 +26,7 @@ type MonadStateV s m =
   , modify :: (s -> s) -> m Unit
   }
 
+-- | The canonical `MonadStateV s m` given `MonadState s m`.
 reifiedStateClass :: forall m s. MonadState s m => MonadStateV s m
 reifiedStateClass = { state, get, gets, put, modify }
 
