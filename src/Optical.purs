@@ -13,6 +13,7 @@ import Text.Smolder.Markup (Markup)
 import Text.Smolder.Renderer.IncrementalDom (render)
 import Web.IncrementalDOM (patch)
 
+
 onStateChange ::
   forall m s. Monad m =>
   (s -> m Unit) -> MonadStateV s m -> MonadStateV s m
@@ -53,10 +54,11 @@ patchRepeatedly :: forall s e.
   Node ->
   s ->
   StateRenderer s (Eff (dom :: DOM, ref :: REF | e)) ->
-  Eff (dom :: DOM, ref :: REF | e) Unit
+  Eff (dom :: DOM, ref :: REF | e) (MonadStateV s (Eff (dom :: DOM, ref :: REF | e)))
 patchRepeatedly node initialState renderer = do
   msv <- makeEffState initialState
   let
     patchNode :: s -> (Eff (dom :: DOM, ref :: REF | e)) Unit
     patchNode s = patch node $ render $ renderer s (onStateChange patchNode msv)
   patchNode initialState
+  pure msv
