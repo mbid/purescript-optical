@@ -61,4 +61,4 @@ patchRepeatedly node initialState renderer = do
     patchNode :: s -> (Eff (dom :: DOM, ref :: REF | e)) Unit
     patchNode s = patch node $ render $ renderer s (onStateChange patchNode msv)
   patchNode initialState
-  pure msv
+  pure $ onStateChange patchNode msv
