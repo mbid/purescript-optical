@@ -11,8 +11,10 @@ where
 import Prelude
 import Control.Monad.State (class MonadState)
 import Control.Monad.State.Class (get, gets, modify, put, state)
-import Data.Lens (_2, over, set, view)
+import Control.MonadZero (class MonadZero, empty)
+import Data.Lens (_1, _2, over, set, view)
 import Data.Lens.Types (Lens')
+import Data.Maybe (Maybe(..))
 import Data.Tuple (Tuple(..))
 
 -- | The datum of a `MonadState`, reified as record.  
@@ -104,3 +106,43 @@ mapState l { state, get, gets, put, modify } =
     put' t = modify $ set l t
     modify' :: (t -> t) -> m Unit
     modify' f = modify $ over l f
+
+-- | Change the state type of a `MonadStateV`, given a partial lens. *All*
+-- | `MonadStateV` actions fail using the `MonadZero` instance if the target of
+-- | the lens is `Nothing`, even `put`.
+-- | In the future, this should be generalized to affine traversals because a
+-- | `Nothing` is never `set` to a `Just`.
+mapStatePartial :: forall s t m.
+  MonadZero m =>
+  Lens' s (Maybe t) -> MonadStateV s m -> MonadStateV t m
+mapStatePartial l { state, get, gets, put, modify } =
+  { state: state'
+  , get: get'
+  , gets: gets'
+  , put: put'
+  , modify: modify'
+  }
+  where
+    fromJust' :: forall a. Maybe a -> m a
+    fromJust' = case _ of
+      Nothing -> empty
+      Just x -> pure x
+    state' :: forall a. (t -> Tuple a t) -> m a
+    state' f = join $ state f'
+      where
+        f' :: s -> Tuple (m a) s
+        f' x = case view l x of
+          Nothing -> Tuple empty x
+          (Just y) ->
+            over _1 pure $ -- Tuple a _ -> Tuple (m a) _
+            over _2 (\y' ->  set l (Just y') x) $ -- Tuple _ t -> Tuple _ s
+            f y
+    get' :: m t
+    get' =
+      view l <$> get >>= fromJust'
+    gets' :: forall a. (t -> a) -> m a
+    gets' f = gets (view l >>> map f) >>= fromJust'
+    put' :: t -> m Unit
+    put' y = modify' $ const y
+    modify' :: (t -> t) -> m Unit
+    modify' f = state' $ f >>> Tuple unit
