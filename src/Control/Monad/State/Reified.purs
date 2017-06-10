@@ -84,7 +84,7 @@ mapMonad nat { state, get, gets, put, modify } =
     modify' :: (s -> s) -> n Unit
     modify' f = nat $ modify f
 
--- | Change the state type of a `MonadStateV`, given a morphism a lens.
+-- | Zoom in into a part of the state, given a lens to it.
 mapState :: forall s t m.
   Monad m =>
   Lens' s t -> MonadStateV s m -> MonadStateV t m
