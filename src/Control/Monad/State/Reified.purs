@@ -5,21 +5,26 @@ module Control.Monad.State.Reified
 , fromGetPutFunctions
 , mapMonad
 , mapState
+, onChange
+, effState
 )
 where
 
 import Prelude
 import Control.Monad.State (class MonadState)
 import Control.Monad.State.Class (get, gets, modify, put, state)
+import Control.Monad.Eff (Eff)
+import Control.Monad.Eff.Ref (REF, modifyRef, newRef, readRef)
 import Control.MonadZero (class MonadZero, empty)
 import Data.Lens (_1, _2, over, set, view)
-import Data.Lens.Types (Lens')
+import Data.Lens.Fold (preview)
+import Data.Lens.Traversal (element)
+import Data.Lens.Types (Lens', Traversal')
 import Data.Maybe (Maybe(..))
 import Data.Tuple (Tuple(..))
 
 -- | The datum of a `MonadState`, reified as record.  
--- | `mapMonad` and `mapState` induce the structure of a bifunctor
--- |`MonadStateV :: Monad x Lens' -> Type`.
+-- | Use `mapMonad` and `mapState` to change the state `s` or the monad `m`.
 type MonadStateV s m = 
   { state :: forall a. (s -> Tuple a s) -> m a
   , get :: m s
@@ -107,14 +112,13 @@ mapState l { state, get, gets, put, modify } =
     modify' :: (t -> t) -> m Unit
     modify' f = modify $ over l f
 
--- | Change the state type of a `MonadStateV`, given a partial lens. *All*
--- | `MonadStateV` actions fail using the `MonadZero` instance if the target of
--- | the lens is `Nothing`, even `put`.
--- | In the future, this should be generalized to affine traversals because a
--- | `Nothing` is never `set` to a `Just`.
+-- | Change the state type of a `MonadStateV`, given an affine traversal (i.e.
+-- | a traversal with at most one target) to a smaller state.
+-- | The resulting `MonadStateV`'s actions fail using the `MonadZero` instance
+-- | if the traversal has no target (even put!).
 mapStatePartial :: forall s t m.
   MonadZero m =>
-  Lens' s (Maybe t) -> MonadStateV s m -> MonadStateV t m
+  Traversal' s t -> MonadStateV s m -> MonadStateV t m
 mapStatePartial l { state, get, gets, put, modify } =
   { state: state'
   , get: get'
@@ -123,6 +127,9 @@ mapStatePartial l { state, get, gets, put, modify } =
   , modify: modify'
   }
   where
+    -- make sure at least l' really traverses only one element
+    l' :: Traversal' s t
+    l' = element 0 l
     fromJust' :: forall a. Maybe a -> m a
     fromJust' = case _ of
       Nothing -> empty
@@ -131,18 +138,45 @@ mapStatePartial l { state, get, gets, put, modify } =
     state' f = join $ state f'
       where
         f' :: s -> Tuple (m a) s
-        f' x = case view l x of
+        f' x = case preview l' x of
           Nothing -> Tuple empty x
           (Just y) ->
-            over _1 pure $ -- Tuple a _ -> Tuple (m a) _
-            over _2 (\y' ->  set l (Just y') x) $ -- Tuple _ t -> Tuple _ s
+            (over _1 pure :: forall b. Tuple a b -> Tuple (m a) b) $
+            (over _2 (\y' ->  set l' y' x) :: forall b. Tuple b t -> Tuple b s) $
             f y
     get' :: m t
     get' =
-      view l <$> get >>= fromJust'
+      preview l' <$> get >>= fromJust'
     gets' :: forall a. (t -> a) -> m a
-    gets' f = gets (view l >>> map f) >>= fromJust'
+    gets' f = gets (preview l' >>> map f) >>= fromJust'
     put' :: t -> m Unit
     put' y = modify' $ const y
     modify' :: (t -> t) -> m Unit
     modify' f = state' $ f >>> Tuple unit
+
+-- | Change a `MonadStateV` so that a callback is run with the new state
+-- | whenever the state is updated.
+-- | The callback receives a `MonadStateV` which allows `get`ting the new
+-- | state.
+-- | Note that modifying the state inside the callback will call the callback
+-- | recursively, possibly resulting in an infinite loop or stack overflow.
+onChange
+  :: forall m s
+   . Monad m
+  => (MonadStateV s m -> m Unit)
+  -> MonadStateV s m
+  -> MonadStateV s m
+onChange listener { get, put } = msv unit
+  where
+    msv :: Unit -> MonadStateV s m
+    msv _ = fromGetPutFunctions get $ \s -> put s *> listener (msv unit)
+
+-- | Create a `MonadStateV` within the `Eff` monad with some initial state.
+effState ::
+  forall e s. s -> Eff (ref :: REF | e) (MonadStateV s (Eff (ref :: REF | e)))
+effState initialState = do
+  stateRef <- newRef initialState
+  let
+    get = readRef stateRef
+    put s = modifyRef stateRef $ const s
+  pure $ fromGetPutFunctions get put

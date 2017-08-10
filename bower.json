@@ -1,12 +1,10 @@
 {
-  "name": "purescript-optical",
-  "homepage": "https://github.com/mbid/purescript-optical",
-  "description": "Composable, Stateful UI in PureScript using Lenses",
+  "name": "purescript-reified-state",
+  "homepage": "https://github.com/mbid/purescript-reified-state",
+  "description": "A value-level version of the MonadState class",
   "main": "",
   "keywords": [
     "purescript",
-    "incremental",
-    "ui",
     "lens"
   ],
   "license": "MIT",
@@ -18,15 +16,11 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git://github.com/mbid/purescript-optical.git"
+    "url": "git://github.com/mbid/purescript-reified-state.git"
   },
   "dependencies": {
     "purescript-prelude": "^3.0.0",
-    "purescript-smolder": "^7.0.0",
-    "purescript-dom": "^4.3.1",
     "purescript-refs": "^3.0.0",
-    "purescript-incremental-dom": "^0.1.0",
-    "purescript-smolder-idom": "^0.1.1",
     "purescript-transformers": "^3.2.0",
     "purescript-profunctor-lenses": "^3.2.0"
   },
